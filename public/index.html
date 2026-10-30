@@ -1,0 +1,958 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<title>Eleições 2026 · tintim</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Presidente 2026, seção por seção: resultados oficiais do TSE de cada cidade e de cada local de votação, nos dois turnos.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* Layout: cabeçalho marinho (tintim) · Mapa = coluna de resultado e filtros + mapa 3D único (cidades ou locais);
+   no celular tudo empilha: cartões, turno, mapa, filtros, e o detalhe abre como folha de baixo. Relatório = coluna de leitura.
+   Tema claro do tintim / Painel Brasil em Números. */
+:root {
+  color-scheme: light;
+  --bg: #f3f5f8; --panel: #ffffff; --ink: #0d1726; --ink-2: #46536a; --ink-3: #6b778c;
+  --line: #e6e9ef; --line-2: #eef1f5; --accent: #1c5cab; --accent-soft: #eaf1fb;
+  --marinho: #0b1a33; --marinho-tinta: #c5d3ea; --marinho-muda: #9fb3d1; --coral: #e4684f;
+  --lula: #d93a3a; --flavio: #2f6bd0; --lula-ink: #a92424; --flavio-ink: #1d4f9f;
+  --outros: #a7a29a; --branco: #c9cfd9; --nulo: #8a94a6; --abst: #46536a;
+  --t-a: #c3c9d4; --t-b: #7d8798; --t-c: #2b3445; --warn: #b8620a;
+  --queda: #1f8a8a; --alta: #a35d2a;
+  --terra: #e9edf3; --parede: #b9c3d3; --parede-2: #8796ad; --map-sea: #f3f5f8; --map-land: #e9edf3; --map-edge: #b9c3d3;
+  --sombra: 0 1px 2px rgba(13, 23, 38, 0.04), 0 8px 24px rgba(13, 23, 38, 0.06);
+  --mono: ui-monospace, "SF Mono", Consolas, monospace;
+  --display: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "ss01"; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 31; background: var(--marinho); }
+a { color: var(--accent); }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+.gutter { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* ---------- cabeçalho ---------- */
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--marinho); color: #fff; }
+header.top .dentro { max-width: 1440px; margin: 0 auto; display: flex; align-items: center; gap: 10px 20px; padding-block: 10px; flex-wrap: wrap; }
+.marca { display: flex; align-items: center; gap: 12px; text-decoration: none; color: #fff; min-width: 0; }
+.marca svg { height: 24px; width: auto; flex: none; }
+.marca .traco { stroke: #fff; } .marca .pingo { fill: #f08a72; }
+.marca span { border-left: 1px solid rgba(255,255,255,.2); padding-left: 12px; font-weight: 700; font-size: 15px; white-space: nowrap; }
+nav.abas { display: flex; gap: 4px; margin-left: auto; }
+nav.abas a { color: var(--marinho-tinta); text-decoration: none; padding: 7px 14px; border-radius: 999px; font-weight: 600; font-size: 14px; white-space: nowrap; }
+nav.abas a:hover { background: rgba(255,255,255,.08); color: #fff; }
+nav.abas a[aria-current="page"] { background: #fff; color: var(--marinho); }
+
+/* ---------- mapa: layout ---------- */
+#v-mapa { max-width: 1440px; margin: 0 auto; display: grid; grid-template-columns: minmax(330px, 400px) 1fr; gap: 16px; padding-block: 16px 24px; align-items: start; }
+.coluna { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.cartao { background: var(--panel); border: 1px solid rgba(13,23,38,.08); border-radius: 16px; box-shadow: var(--sombra); padding: 16px; min-width: 0; }
+.cartao h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-3); font-weight: 700; margin: 0 0 10px; }
+
+/* resultado com fotos */
+.res-tit { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.res-tit b { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+.res-tit span { font-size: 12px; color: var(--ink-3); }
+.cands { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cand { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; position: relative; }
+.cand .topo-c { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cand img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; object-position: 50% 18%; flex: none; border: 3px solid var(--cor); background: var(--line-2); }
+.cand .nome { font-weight: 700; font-size: 14px; line-height: 1.2; min-width: 0; }
+.cand .nome small { display: block; color: var(--ink-3); font-weight: 500; font-size: 12px; }
+.cand .pct { font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; color: var(--cor-ink); }
+.cand .pct small { font-size: 13px; font-weight: 600; color: var(--ink-3); letter-spacing: 0; margin-left: 4px; }
+.cand .votos { font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.cand .trilho { height: 6px; background: var(--line-2); border-radius: 99px; overflow: hidden; }
+.cand .trilho i { display: block; height: 100%; background: var(--cor); border-radius: 99px; }
+.selo-lider { align-self: flex-start; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--cor-ink); background: var(--line-2); padding: 2px 8px; border-radius: 99px; }
+.outros-c { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: 12.5px; color: var(--ink-2); }
+.outros-c span { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.outros-c img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; object-position: 50% 18%; }
+.extras { margin-top: 10px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.extras div { background: var(--line-2); border-radius: 10px; padding: 7px 9px; min-width: 0; }
+.extras b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+.extras span { font-size: 11.5px; color: var(--ink-3); }
+
+/* controles */
+.seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--line-2); border-radius: 12px; padding: 4px; gap: 4px; }
+.seg button { border: 0; background: transparent; border-radius: 9px; padding: 9px 6px; font-weight: 600; font-size: 13.5px; color: var(--ink-2); cursor: pointer; line-height: 1.2; min-width: 0; }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(13,23,38,.12); }
+.campo { display: flex; flex-direction: column; gap: 5px; margin-top: 12px; }
+.campo label { font-size: 12px; font-weight: 600; color: var(--ink-3); }
+.campo select, .campo input { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 14.5px; min-width: 0; }
+.dois { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dois .campo { min-width: 0; }
+.legenda { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+.rampa { height: 10px; border-radius: 99px; }
+.rampa-eixo { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11px; color: var(--ink-3); gap: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; }
+.chip i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.nota { font-size: 12px; color: var(--ink-3); }
+.resumo table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.resumo td, .resumo th { padding: 5px 4px; border-bottom: 1px solid var(--line-2); text-align: right; }
+.resumo td:first-child, .resumo th:first-child { text-align: left; }
+.resumo th { font-size: 11.5px; color: var(--ink-3); font-weight: 600; }
+
+/* mapa */
+.mapa-wrap { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 66px); height: calc(100vh - 100px); min-height: 480px; border-radius: 18px; overflow: hidden; background: radial-gradient(120% 90% at 50% 30%, #ffffff 0%, #eef2f7 55%, #e3e9f1 100%); border: 1px solid rgba(13,23,38,.08); box-shadow: var(--sombra); }
+#mapa { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: none; display: block; }
+#mapa.arrastando { cursor: grabbing; }
+.ferr { position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 2; }
+.ferr button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); box-shadow: var(--sombra); font-weight: 700; font-size: 17px; cursor: pointer; color: var(--ink); }
+.ferr button.txt { font-size: 12px; }
+.ferr button[aria-pressed="true"] { background: var(--marinho); color: #fff; border-color: var(--marinho); }
+.selo-mapa { position: absolute; left: 12px; top: 12px; z-index: 2; background: rgba(255,255,255,.92); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; font-size: 12.5px; color: var(--ink-2); max-width: calc(100% - 80px); box-shadow: var(--sombra); }
+.selo-mapa b { color: var(--ink); }
+.carregando { position: absolute; inset: 0; display: grid; place-items: center; color: var(--ink-3); font-size: 14px; pointer-events: none; z-index: 1; }
+.tip { position: absolute; pointer-events: none; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 7px 10px; font-size: 12.5px; box-shadow: 0 6px 18px rgba(13,23,38,.14); max-width: 260px; z-index: 3; }
+.tip b { display: block; }
+
+/* detalhe */
+.detalhe { position: absolute; right: 12px; top: 64px; bottom: 12px; width: min(520px, calc(100% - 24px)); background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 40px rgba(13,23,38,.18); display: flex; flex-direction: column; z-index: 4; }
+.detalhe header { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); display: flex; gap: 12px; align-items: start; }
+.detalhe header div { flex: 1; min-width: 0; }
+.detalhe h3 { font-size: 17px; font-weight: 800; margin: 0; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.detalhe .end { font-size: 12.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+.fechar { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; width: 36px; height: 36px; cursor: pointer; font-size: 18px; flex: none; }
+.detalhe .corpo { overflow: auto; padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 14px; overscroll-behavior: contain; }
+.barras { display: flex; flex-direction: column; gap: 8px; }
+.barra-linha { display: grid; grid-template-columns: 70px 1fr; gap: 8px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+.barra { display: flex; height: 20px; gap: 2px; min-width: 0; }
+.barra span { height: 100%; min-width: 1px; }
+.barra span:first-child { border-radius: 5px 0 0 5px; }
+.barra span:last-child { border-radius: 0 5px 5px 0; }
+.mini { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.mini td, .mini th { padding: 6px 4px; border-bottom: 1px solid var(--line-2); text-align: right; }
+.mini td:first-child, .mini th:first-child { text-align: left; }
+.mini th { font-size: 11.5px; color: var(--ink-3); font-weight: 600; }
+.botao { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: 999px; font-weight: 600; font-size: 14.5px; border: 1.5px solid var(--marinho); background: var(--marinho); color: #fff; cursor: pointer; text-decoration: none; }
+.botao.claro { background: var(--panel); color: var(--marinho); }
+.tab-sec { overflow-x: auto; }
+.tab-sec table { border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tab-sec th, .tab-sec td { padding: 5px 7px; border-bottom: 1px solid var(--line-2); text-align: right; }
+.tab-sec thead th { position: sticky; top: 0; background: var(--panel); font-weight: 600; color: var(--ink-3); font-size: 11px; }
+.tab-sec .grp { text-align: center; border-bottom: 1px solid var(--line); }
+.tab-sec td.sep, .tab-sec th.sep { border-left: 1px solid var(--line); }
+.flag { color: var(--warn); font-weight: 700; }
+
+/* ---------- celular e tablet ---------- */
+@media (max-width: 899px) {
+  #v-mapa { grid-template-columns: 1fr; gap: 12px; padding-block: 12px 24px; }
+  .coluna { display: contents; }
+  #c-resultado { order: 1; }
+  #c-turno { order: 2; }
+  .mapa-wrap { order: 3; position: relative; top: 0; height: clamp(300px, min(66vh, 104vw), 640px); min-height: 0; border-radius: 16px; }
+  #c-filtros { order: 4; }
+  #c-legenda { order: 5; }
+  #c-resumo { order: 6; }
+  .detalhe { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 82vh; border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); z-index: 40; }
+  .detalhe::before { content: ""; width: 40px; height: 4px; border-radius: 99px; background: var(--line); margin: 8px auto 0; flex: none; }
+  .selo-mapa { font-size: 12px; padding: 6px 10px; }
+  .ferr button { width: 38px; height: 38px; }
+}
+@media (max-width: 640px) {
+  .tab-sec { overflow: visible; }
+  .tab-sec thead { display: none; }
+  .tab-sec table, .tab-sec tbody, .tab-sec tr, .tab-sec td { display: block; width: 100%; white-space: normal; }
+  .tab-sec tr { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; margin-bottom: 8px; display: grid !important; grid-template-columns: 1fr 1fr; column-gap: 16px; }
+  .tab-sec td { display: flex; justify-content: space-between; gap: 8px; border: 0; padding: 2px 0; min-width: 0; }
+  .tab-sec td:nth-child(1), .tab-sec td:nth-child(2) { font-weight: 700; }
+  .tab-sec td::before { content: attr(data-label); color: var(--ink-3); font-size: 12px; text-align: left; }
+  .tab-sec td.sep { border-left: 0; }
+  .marca span { display: none; }
+}
+@media (max-width: 400px) {
+  .cand { padding: 10px; gap: 6px; }
+  .cand img { width: 40px; height: 40px; border-width: 2px; }
+  .cand .pct { font-size: 23px; }
+  .cand .nome { font-size: 13px; }
+  .seg button { font-size: 12.5px; padding: 8px 4px; }
+  .dois { grid-template-columns: 1fr; gap: 0; }
+  nav.abas a { padding: 6px 10px; font-size: 13px; }
+  .extras b { font-size: 13.5px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* ---------- Relatórios ---------- */
+#v-rel { flex: 1; overflow-y: auto; }
+.rel { max-width: 920px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.rel-indice { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; margin: 10px 0 28px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.rel-indice a { color: var(--accent); text-decoration: none; }
+.rel h1 { font-family: var(--display); font-weight: 650; font-size: 30px; line-height: 1.15; margin: 0 0 8px; text-wrap: balance; letter-spacing: -0.01em; }
+.rel h2 { font-family: var(--display); font-weight: 650; font-size: 22px; margin: 44px 0 6px; text-wrap: balance; }
+.rel h3 { font-size: 15px; font-weight: 600; margin: 24px 0 6px; }
+.rel p, .rel li { max-width: 68ch; color: var(--ink); }
+.rel .sub { color: var(--ink-2); font-size: 15px; max-width: 68ch; }
+.rel .rot { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); font-weight: 600; }
+.leitura { border-left: 3px solid var(--accent); background: var(--accent-soft); padding: 10px 14px; border-radius: 0 6px 6px 0; margin: 14px 0; max-width: 72ch; }
+.leitura p { margin: 4px 0; }
+.veredito { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--line); }
+.v-ok { color: var(--accent); }
+.v-parcial { color: var(--warn); }
+.tabela { overflow-x: auto; margin: 10px 0; }
+.tabela table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 13px; min-width: 100%; }
+.tabela th, .tabela td { padding: 6px 10px; border-bottom: 1px solid var(--line-2); text-align: right; white-space: nowrap; }
+.tabela th:first-child, .tabela td:first-child { text-align: left; white-space: normal; }
+.tabela thead th { color: var(--ink-3); font-size: 11.5px; font-weight: 600; border-bottom: 1px solid var(--line); }
+.baixar { display: inline-flex; align-items: center; gap: 8px; margin: 4px 0 18px; padding: 8px 14px; border: 1px solid var(--accent); border-radius: 6px; color: var(--accent); text-decoration: none; font-weight: 600; font-size: 13px; }
+.comp { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+.comp-linha { display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: center; }
+.comp-linha > span { font-size: 13px; }
+.comp-barras { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.comp-b { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.comp-b i { display: block; height: 12px; border-radius: 0 3px 3px 0; min-width: 2px; }
+.comp-b i.neg { border-radius: 3px 0 0 3px; opacity: .55; }
+.heat-wrap canvas { width: 100%; aspect-ratio: 1; display: block; border: 1px solid var(--line); border-radius: 4px; }
+.eixo-y { font-size: 11px; color: var(--ink-3); }
+@media (max-width: 640px) {
+  .tabela { overflow: visible; }
+  .tabela thead, .tab-sec thead { display: none; }
+  .tabela table, .tabela tbody, .tabela tr, .tabela td,
+  .tab-sec table, .tab-sec tbody, .tab-sec tr, .tab-sec td { display: block; width: 100%; min-width: 0; }
+  .tabela tr, .tab-sec tr { border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; margin-bottom: 8px; background: var(--panel); }
+  .tabela td, .tab-sec td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 3px 0; white-space: normal; text-align: right; }
+  .tabela td::before, .tab-sec td::before { content: attr(data-label); color: var(--ink-3); text-align: left; font-size: 12px; }
+  .tabela td:first-child { font-weight: 600; text-align: left; padding-bottom: 5px; border-bottom: 1px solid var(--line-2); margin-bottom: 3px; }
+  .tabela td:first-child::before { content: none; }
+  .tab-sec td.sep { border-left: 0; }
+  .tab-sec { overflow: visible; }
+  .resumo .abs { display: none; }
+  .comp-linha { grid-template-columns: 1fr; gap: 4px; }
+}
+body.pdf header.top, body.pdf .rel-indice, body.pdf .baixar { display: none !important; }
+body.pdf #v-rel { overflow: visible; }
+body.pdf .app { height: auto; }
+@media print {
+  header.top, .rel-indice, .baixar { display: none !important; }
+  .fig, .tabela tr, .comp-linha, .multi > div, .leitura { break-inside: avoid; }
+  .rel h2 { break-after: avoid; }
+}
+.fig { margin: 14px 0 6px; }
+.fig figcaption { font-size: 12px; color: var(--ink-3); margin-top: 6px; max-width: 72ch; }
+.multi { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.multi > div { min-width: 0; }
+.multi .t { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+canvas.heat { width: 100%; aspect-ratio: 1; max-width: 100%; border: 1px solid var(--line); border-radius: 4px; image-rendering: pixelated; display: block; }
+svg.graf { width: 100%; height: auto; display: block; overflow: hidden; }
+svg.graf text { fill: var(--ink-3); font-family: var(--mono); font-size: 10px; }
+svg.graf .grade { stroke: var(--line-2); stroke-width: 1; }
+svg.graf .eixo { stroke: var(--line); stroke-width: 1; }
+.dicas-rel { position: fixed; pointer-events: none; z-index: 20; }
+
+
+/* ajustes do relatório no layout novo */
+#v-rel { overflow: visible; }
+.rel h1 { font-weight: 800; letter-spacing: -0.03em; }
+.rel h2 { font-family: var(--display); font-weight: 800; letter-spacing: -0.02em; }
+.leitura { border-left-color: var(--accent); background: var(--accent-soft); }
+</style>
+
+</head>
+<body>
+<header class="top gutter">
+  <div class="dentro">
+    <a class="marca" href="https://painel.tintim.online" aria-label="tintim, página inicial"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 14 280 96" aria-hidden="true">
+  <g fill="none" class="traco" stroke-width="12" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 28 V84 q0 16 16 16"/><path d="M0 50 H24"/>
+    <path d="M44 54 V100"/>
+    <path d="M66 100 V52 M66 74 q0-24 21-24 q21 0 21 24 V100"/>
+    <path d="M132 28 V84 q0 16 16 16"/><path d="M122 50 H146"/>
+    <path d="M166 54 V100"/>
+    <path d="M188 100 V52 M188 72 q0-22 19-22 q19 0 19 22 V100 M226 72 q0-22 19-22 q19 0 19 22 V100"/>
+  </g>
+  <circle cx="44" cy="30" r="8.5" class="pingo"/>
+  <circle cx="166" cy="30" r="8.5" class="pingo"/>
+</svg><span>Eleições 2026</span></a>
+    <nav class="abas" aria-label="Seções">
+      <a href="#mapa" id="aba-mapa">Mapa</a>
+      <a href="#relatorios" id="aba-rel">Relatório</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+<section id="v-mapa" class="gutter">
+  <div class="coluna">
+    <div class="cartao" id="c-resultado" aria-live="polite">
+      <div class="res-tit"><b id="res-tit">Resultado · 2º turno</b><span id="res-onde">Brasil</span></div>
+      <div class="cands" id="cands"></div>
+      <div id="res-mais"></div>
+    </div>
+    <div class="cartao" id="c-turno">
+      <h2>Turno</h2>
+      <div class="seg" id="seg-turno" role="group" aria-label="Turno">
+        <button data-v="2" aria-pressed="true">2º turno</button>
+        <button data-v="1" aria-pressed="false">1º turno</button>
+        <button data-v="c" aria-pressed="false">Comparar 1º → 2º</button>
+      </div>
+      <div class="campo" style="margin-top:14px">
+        <label>Ver no mapa</label>
+        <div class="seg" id="seg-camada" role="group" aria-label="Ver no mapa">
+          <button data-v="cid" aria-pressed="true">Cidades</button>
+          <button data-v="loc" aria-pressed="false">Locais de votação</button>
+        </div>
+      </div>
+    </div>
+    <div class="cartao" id="c-filtros">
+      <h2>Filtros</h2>
+      <div class="campo" style="margin-top:0"><label for="busca">Buscar cidade</label>
+        <input id="busca" list="lista-cid" placeholder="Digite o nome da cidade" autocomplete="off"><datalist id="lista-cid"></datalist></div>
+      <div class="dois">
+        <div class="campo"><label for="uf">Estado</label><select id="uf"><option value="">Brasil inteiro</option></select></div>
+        <div class="campo"><label for="cor">Colorir por</label><select id="cor"></select></div>
+      </div>
+      <div class="campo"><label for="recorte">Seções incluídas</label>
+        <select id="recorte">
+          <option value="todas">Todas as seções</option>
+          <option value="ate17">Encerradas até 17h15 (horário normal)</option>
+          <option value="apos17">Encerradas depois das 17h15</option>
+          <option value="apos19">Encerradas às 19h ou depois</option>
+          <option value="atipicos">Só seções com caso atípico</option>
+        </select></div>
+      <p class="nota" style="margin:10px 0 0">Horários de encerramento do 2º turno, em horário de Brasília. Casos atípicos: 90% ou mais para um candidato, comparecimento de 100% e outras situações descritas no relatório.</p>
+    </div>
+    <div class="cartao" id="c-legenda"><h2>Legenda</h2><div class="legenda" id="legenda"></div></div>
+    <div class="cartao resumo" id="c-resumo"><h2 id="resumo-tit">Nesta seleção</h2><div id="resumo"></div></div>
+  </div>
+  <div class="mapa-wrap">
+    <canvas id="mapa" aria-label="Mapa do Brasil com os resultados por cidade ou por local de votação"></canvas>
+    <div class="carregando" id="carregando">Carregando o mapa…</div>
+    <div class="selo-mapa" id="selo-mapa"></div>
+    <div class="ferr">
+      <button id="zmais" aria-label="Aproximar">+</button>
+      <button id="zmenos" aria-label="Afastar">−</button>
+      <button id="zfit" class="txt" aria-label="Ver o Brasil inteiro">BR</button>
+      <button id="z3d" class="txt" aria-pressed="true" aria-label="Alternar mapa 3D">3D</button>
+    </div>
+    <div class="tip" id="tip" hidden></div>
+    <div class="detalhe" id="detalhe" hidden role="dialog" aria-label="Detalhe"></div>
+  </div>
+</section>
+
+<section id="v-rel" hidden>
+  <article class="rel" id="rel"><p class="nota">Carregando relatório…</p></article>
+</section>
+</main>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const nf = new Intl.NumberFormat("pt-BR");
+const pf = (v, c = 1) => Number.isFinite(v) ? v.toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c }) : "–";
+const sinal = (v, c = 1) => Number.isFinite(v) ? (v > 0 ? "+" : v < 0 ? "−" : "") + pf(Math.abs(v), c) : "–";
+const hex2rgb = h => { h = h.replace("#", ""); if (h.length === 3) h = h.split("").map(c => c + c).join(""); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+const rgb = a => `rgb(${a.join(",")})`;
+const celular = () => matchMedia("(max-width: 899px)").matches;
+
+/* ---------------- Abas ---------------- */
+function rota() {
+  const pdf = location.hash === "#pdf";
+  if (pdf) document.body.classList.add("pdf");
+  const h = location.hash === "#relatorios" || pdf || location.hash.startsWith("#r-") ? "relatorios" : "mapa";
+  $("#v-mapa").hidden = h !== "mapa";
+  $("#v-rel").hidden = h !== "relatorios";
+  $("#aba-mapa").setAttribute("aria-current", h === "mapa" ? "page" : "false");
+  $("#aba-rel").setAttribute("aria-current", h === "relatorios" ? "page" : "false");
+  if (h === "mapa") { iniciar(); requestAnimationFrame(redimensiona); } else montaRelatorio();
+}
+addEventListener("hashchange", rota);
+
+/* ---------------- Dados ---------------- */
+let META, ROWS, NC, COL = {}, N, LAT, LON, MXl, MYl, UFL, LM, CAND, CID, NCID, GEO;
+const AG = {}, AC = {};          // agregados por local e por cidade
+const K = ["secoes","aptos1","comp1","lula1","flavio1","outros1","branco1","nulo1","aptos2","comp2","lula2","flavio2","branco2","nulo2","biom2"];
+const merc = (lat, lon) => { const s = Math.sin(lat * Math.PI / 180); return [(lon + 180) / 360 * 1000, (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * 1000]; };
+async function binario(url) { const b = atob((await (await fetch(url)).text()).trim()); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u.buffer; }
+let carga = null;
+function iniciar() { if (!carga) carga = carregar().then(() => { agrega(); enquadraSel(); redimensiona(); }); return carga; }
+async function carregar() {
+  const [meta, loc, ufl, lin, lm, cand, cid, geo] = await Promise.all([
+    fetch("dados/meta.json").then(r => r.json()), binario("dados/locais.b64.txt"), binario("dados/locais_uf.b64.txt"),
+    binario("dados/linhas.b64.txt"), binario("dados/locais_mun.b64.txt"), fetch("dados/candidatos.json").then(r => r.json()),
+    fetch("dados/cidades.json").then(r => r.json()), fetch("dados/uf.json").then(r => r.json())]);
+  META = meta; CAND = cand; GEO = geo;
+  N = META.n_locais; NC = META.cols.length; META.cols.forEach((c, i) => COL[c] = i);
+  ROWS = META.dtype === "u16" ? new Uint16Array(lin) : new Uint32Array(lin);
+  const ll = new Float32Array(loc); LAT = new Float32Array(N); LON = new Float32Array(N); MXl = new Float32Array(N); MYl = new Float32Array(N);
+  for (let i = 0; i < N; i++) { LAT[i] = ll[2 * i]; LON[i] = ll[2 * i + 1]; [MXl[i], MYl[i]] = merc(LAT[i], LON[i]); }
+  UFL = new Uint8Array(ufl); LM = new Uint16Array(lm);
+  // cidades: Path2D em coordenadas do mundo + caixa
+  CID = cid.cidades.map(([ibge, nome, uf, polys]) => {
+    const p = new Path2D(); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const poly of polys) for (const anel of poly) anel.forEach(([lo, la], i) => { const [x, y] = merc(la, lo); i ? p.lineTo(x, y) : p.moveTo(x, y); if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; });
+    return { ibge, nome, uf, p, x0, y0, x1, y1 };
+  });
+  NCID = CID.length;
+  // país e UFs
+  PAIS = new Path2D(); UFS = [];
+  for (const f of GEO.features) { const g = f.geometry, polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates, p = new Path2D();
+    for (const poly of polys) for (const anel of poly) anel.forEach(([lo, la], i) => { const [x, y] = merc(la, lo); i ? p.lineTo(x, y) : p.moveTo(x, y); });
+    UFS.push(p); PAIS.addPath(p); }
+  for (const k of K) { AG[k] = new Float64Array(N); AC[k] = new Float64Array(NCID); }
+  AG.flags = new Uint8Array(N); AC.locais = new Uint32Array(NCID);
+  VIS = new Uint8Array(N); CORL = new Array(N); CORC = new Array(NCID); VALL = new Float32Array(N); VALC = new Float32Array(NCID);
+  META.ufs.forEach(u => $("#uf").insertAdjacentHTML("beforeend", `<option value="${u}">${u}</option>`));
+  $("#lista-cid").innerHTML = CID.map(c => `<option value="${c.nome} (${c.uf})"></option>`).join("");
+  $("#carregando").hidden = true;
+}
+const localDe = r => COL.local !== undefined ? ROWS[r * NC + COL.local] : ROWS[r * NC + COL.local_hi] * 65536 + ROWS[r * NC + COL.local_lo];
+
+/* ---------------- Estado da tela ---------------- */
+const E = { turno: "2", camada: "cid", cor: "venc", recorte: "todas", uf: "", tres: true };
+const FAIXAS = { todas: [0, 1, 2, 3], ate17: [0], apos17: [1, 2], apos19: [2], atipicos: [0, 1, 2, 3] };
+const CORES = {
+  "2": [["venc", "Quem venceu"], ["abst", "Abstenção"], ["bn", "Brancos + nulos"]],
+  "1": [["venc", "Quem venceu"], ["abst", "Abstenção"], ["bn", "Brancos + nulos"]],
+  "c": [["dmar", "Mudança da diferença Lula − Flávio"], ["dlula", "Variação de Lula"], ["dflavio", "Variação de Flávio"], ["dabst", "Variação da abstenção"], ["dbn", "Variação de brancos + nulos"]],
+};
+let PAIS, UFS, VIS, CORL, CORC, VALL, VALC, ordemL = [];
+
+function agrega() {
+  const fx = new Uint8Array(4); FAIXAS[E.recorte].forEach(f => fx[f] = 1);
+  const soAtip = E.recorte === "atipicos";
+  for (const k of K) { AG[k].fill(0); AC[k].fill(0); }
+  AG.flags.fill(0); AC.locais.fill(0);
+  const nr = ROWS.length / NC, idx = K.map(k => COL[k]), cf = COL.faixa, cfl = COL.flags;
+  const ufi = E.uf ? META.ufs.indexOf(E.uf) : -1;
+  const conta = new Uint8Array(N);
+  for (let r = 0; r < nr; r++) {
+    const o = r * NC;
+    if (!fx[ROWS[o + cf]] || (soAtip && !ROWS[o + cfl])) continue;
+    const l = localDe(r);
+    if (ufi >= 0 && UFL[l] !== ufi) continue;
+    const c = LM[l];
+    for (let k = 0; k < K.length; k++) { const v = ROWS[o + idx[k]]; AG[K[k]][l] += v; if (c !== 65535) AC[K[k]][c] += v; }
+    AG.flags[l] |= ROWS[o + cfl];
+    if (!conta[l] && c !== 65535) { conta[l] = 1; AC.locais[c]++; }
+  }
+  pinta();
+}
+
+/* métricas de uma entidade (A = AG ou AC, i = índice) */
+function met(A, i, m) {
+  const t = E.turno, v1 = A.lula1[i] + A.flavio1[i] + A.outros1[i], v2 = A.lula2[i] + A.flavio2[i];
+  const marg1 = v1 ? 100 * (A.lula1[i] - A.flavio1[i]) / v1 : NaN, marg2 = v2 ? 100 * (A.lula2[i] - A.flavio2[i]) / v2 : NaN;
+  switch (m) {
+    case "venc": return t === "1" ? marg1 : marg2;
+    case "abst": return t === "1" ? (A.aptos1[i] ? 100 * (1 - A.comp1[i] / A.aptos1[i]) : NaN) : (A.aptos2[i] ? 100 * (1 - A.comp2[i] / A.aptos2[i]) : NaN);
+    case "bn": return t === "1" ? (A.comp1[i] ? 100 * (A.branco1[i] + A.nulo1[i]) / A.comp1[i] : NaN) : (A.comp2[i] ? 100 * (A.branco2[i] + A.nulo2[i]) / A.comp2[i] : NaN);
+    case "dmar": return marg2 - marg1;
+    case "dlula": return A.aptos1[i] && A.aptos2[i] ? 100 * (A.lula2[i] / A.aptos2[i] - A.lula1[i] / A.aptos1[i]) : NaN;
+    case "dflavio": return A.aptos1[i] && A.aptos2[i] ? 100 * (A.flavio2[i] / A.aptos2[i] - A.flavio1[i] / A.aptos1[i]) : NaN;
+    case "dabst": return A.aptos1[i] && A.aptos2[i] ? 100 * ((1 - A.comp2[i] / A.aptos2[i]) - (1 - A.comp1[i] / A.aptos1[i])) : NaN;
+    case "dbn": return A.comp1[i] && A.comp2[i] ? 100 * ((A.branco2[i] + A.nulo2[i]) / A.comp2[i] - (A.branco1[i] + A.nulo1[i]) / A.comp1[i]) : NaN;
+  }
+}
+const ESC = {
+  venc: { tipo: "div", dom: 40 }, dmar: { tipo: "div", dom: 15 },
+  dlula: { tipo: "cand", c: "lula", dom: 12 }, dflavio: { tipo: "cand", c: "flavio", dom: 12 },
+  abst: { tipo: "seq", dom: [5, 40] }, bn: { tipo: "seq", dom: [0, 12] },
+  dabst: { tipo: "neu", dom: 8 }, dbn: { tipo: "neu", dom: 5 },
+};
+let PAL = {}, RAMPA = [];
+function lePaleta() {
+  PAL = { lula: hex2rgb(css("--lula")), flavio: hex2rgb(css("--flavio")), mid: [236, 239, 244], abst: hex2rgb(css("--abst")),
+    seq0: [226, 232, 241], seq1: hex2rgb(css("--marinho")), queda: hex2rgb(css("--queda")), alta: hex2rgb(css("--alta")) };
+}
+function montaRampa() {
+  const e = ESC[E.cor], R = [];
+  for (let i = 0; i < 64; i++) {
+    const t = i / 63 * 2 - 1;
+    if (e.tipo === "div") R.push(rgb(t < 0 ? mix(PAL.mid, PAL.flavio, Math.pow(-t, .8)) : mix(PAL.mid, PAL.lula, Math.pow(t, .8))));
+    else if (e.tipo === "cand") R.push(rgb(t < 0 ? mix(PAL.mid, PAL.abst, -t * .8) : mix(PAL.mid, PAL[e.c], t)));
+    else if (e.tipo === "neu") R.push(rgb(t < 0 ? mix(PAL.mid, PAL.queda, -t) : mix(PAL.mid, PAL.alta, t)));
+    else R.push(rgb(mix(PAL.seq0, PAL.seq1, i / 63)));
+  }
+  RAMPA = R;
+}
+function corDe(v) {
+  const e = ESC[E.cor];
+  if (!Number.isFinite(v)) return null;
+  let t;
+  if (e.tipo === "seq") t = (Math.max(e.dom[0], Math.min(e.dom[1], v)) - e.dom[0]) / (e.dom[1] - e.dom[0]);
+  else t = (Math.max(-e.dom, Math.min(e.dom, v)) / e.dom + 1) / 2;
+  return RAMPA[Math.round(t * 63)];
+}
+
+/* ---------------- Recalcular cores, legenda, cartões ---------------- */
+function pinta() {
+  for (let l = 0; l < N; l++) {
+    const apt = AG.aptos2[l] || AG.aptos1[l];
+    VIS[l] = apt > 0 ? 1 : 0;
+    if (!VIS[l]) continue;
+    VALL[l] = met(AG, l, E.cor); CORL[l] = corDe(VALL[l]); if (!CORL[l]) VIS[l] = 0;
+  }
+  for (let c = 0; c < NCID; c++) { VALC[c] = AC.aptos2[c] || AC.aptos1[c] ? met(AC, c, E.cor) : NaN; CORC[c] = corDe(VALC[c]); }
+  ordemL = []; for (let l = 0; l < N; l++) if (VIS[l]) ordemL.push(l);
+  ordemL.sort((a, b) => (AG.aptos2[b] - AG.aptos2[a]));
+  legenda(); cartoes(); resumo(); selo(); desenha();
+}
+
+function somaTudo() {
+  const s = {}; for (const k of K) { let t = 0; const a = AG[k]; for (let l = 0; l < N; l++) t += a[l]; s[k] = t; }
+  return s;
+}
+function cartoes() {
+  const oficial = E.recorte === "todas" && !E.uf;
+  const s = oficial ? null : somaTudo();
+  const B = CAND.brasil, F = CAND.fotos, NM = CAND.nomes;
+  const t = E.turno;
+  const tot = (c, tt) => oficial ? B[c + tt] : s[c + tt];
+  const valid = tt => tt === "1" ? (oficial ? B.lula1 + B.flavio1 + B.cury1 + B.renan1 + B.caiado1 + B.demais1 : s.lula1 + s.flavio1 + s.outros1) : tot("lula", "2") + tot("flavio", "2");
+  $("#res-tit").textContent = t === "c" ? "Do 1º para o 2º turno" : `Resultado · ${t}º turno`;
+  $("#res-onde").textContent = (E.uf ? E.uf : "Brasil") + (oficial ? " · total oficial, com exterior" : " · seções selecionadas") + (E.recorte !== "todas" ? " · " + $("#recorte").selectedOptions[0].text.toLowerCase() : "");
+  const card = (c, cor) => {
+    const p1 = 100 * tot(c, "1") / valid("1"), p2 = 100 * tot(c, "2") / valid("2");
+    const p = t === "1" ? p1 : p2, v = t === "1" ? tot(c, "1") : tot(c, "2");
+    const outro = c === "lula" ? "flavio" : "lula";
+    const lider = t !== "c" && v > (t === "1" ? tot(outro, "1") : tot(outro, "2"));
+    const corpo = t === "c"
+      ? `<div class="pct">${pf(p2)}%<small>${sinal(p2 - p1)} pp</small></div><div class="votos">1º turno: ${pf(p1)}% · 2º: ${nf.format(tot(c, "2"))} votos (${sinal((tot(c, "2") - tot(c, "1")) / 1e6, 2)} mi)</div>`
+      : `<div class="pct">${pf(p)}%</div><div class="votos">${nf.format(v)} votos</div>`;
+    return `<div class="cand${lider ? " lider" : ""}" style="--cor:var(--${cor});--cor-ink:var(--${cor}-ink)">
+      <div class="topo-c"><img src="${F[c]}" alt="Foto de ${NM[c][0]}"><div class="nome">${NM[c][0]}<small>${NM[c][1]} · ${NM[c][2]}</small></div></div>
+      ${corpo}<div class="trilho"><i style="width:${Math.min(100, p)}%"></i></div>${lider ? '<span class="selo-lider">mais votado</span>' : ""}</div>`;
+  };
+  $("#cands").innerHTML = card("lula", "lula") + card("flavio", "flavio");
+  // mais: outros do 1º turno, brancos, nulos, abstenção
+  let mais = "";
+  if (t !== "2") {
+    if (oficial) mais += `<div class="outros-c">${["cury", "renan", "caiado"].map(c => `<span><img src="${F[c]}" alt="">${NM[c][0]} ${pf(100 * B[c + "1"] / valid("1"))}%</span>`).join("")}<span>Demais ${pf(100 * B.demais1 / valid("1"))}%</span></div>`;
+    else mais += `<div class="outros-c"><span>Outros candidatos no 1º turno: ${pf(100 * s.outros1 / valid("1"))}%</span></div>`;
+  }
+  const tt = t === "1" ? "1" : "2";
+  const apt = oficial ? B["aptos" + tt] : s["aptos" + tt], comp = oficial ? apt - B["abst" + tt] : s["comp" + tt];
+  const br = oficial ? B["branco" + tt] : s["branco" + tt], nu = oficial ? B["nulo" + tt] : s["nulo" + tt];
+  mais += `<div class="extras"><div><b>${pf(100 * (1 - comp / apt))}%</b><span>abstenção</span></div><div><b>${pf(100 * br / comp)}%</b><span>brancos</span></div><div><b>${pf(100 * nu / comp)}%</b><span>nulos</span></div></div>`;
+  $("#res-mais").innerHTML = mais;
+}
+function resumo() {
+  const s = somaTudo();
+  let ncid = 0; for (let c = 0; c < NCID; c++) if (AC.aptos2[c]) ncid++;
+  let nloc = 0; for (let l = 0; l < N; l++) if (AG.aptos2[l]) nloc++;
+  const l1 = 100 * s.lula1 / (s.lula1 + s.flavio1), l2 = 100 * s.lula2 / (s.lula2 + s.flavio2);
+  $("#resumo").innerHTML = `<table><tbody>
+    <tr><td>Seções</td><td>${nf.format(s.secoes)}</td></tr>
+    <tr><td>Locais de votação</td><td>${nf.format(nloc)}</td></tr>
+    <tr><td>Cidades</td><td>${nf.format(ncid)}</td></tr>
+    <tr><td>Eleitores aptos</td><td>${nf.format(s.aptos2)}</td></tr></tbody></table>
+    <table style="margin-top:10px"><thead><tr><th>Só Lula e Flávio</th><th>1º turno</th><th>2º turno</th><th>Mudança</th></tr></thead><tbody>
+    <tr><td><span class="chip"><i style="background:var(--lula)"></i>Lula</span></td><td>${pf(l1)}%</td><td>${pf(l2)}%</td><td>${sinal(l2 - l1)} pp</td></tr>
+    <tr><td><span class="chip"><i style="background:var(--flavio)"></i>Flávio</span></td><td>${pf(100 - l1)}%</td><td>${pf(100 - l2)}%</td><td>${sinal(l1 - l2)} pp</td></tr></tbody></table>
+    <p class="nota" style="margin:8px 0 0">Mesmas seções nos dois turnos, considerando só os votos dos dois finalistas. Serve para comparar grupos de seções: se um grupo já votava diferente no 1º turno, a diferença no 2º não vem do filtro escolhido. Exterior fora do mapa.</p>`;
+}
+function selo() {
+  const nomeCor = CORES[E.turno].find(c => c[0] === E.cor)[1];
+  $("#selo-mapa").innerHTML = `<b>${E.camada === "cid" ? "Cidades" : "Locais de votação"}</b> · ${nomeCor}${E.turno === "c" ? "" : ", " + E.turno + "º turno"}`;
+}
+function legenda() {
+  const e = ESC[E.cor], el = $("#legenda");
+  const grad = `linear-gradient(90deg, ${[0, 10, 21, 31, 42, 52, 63].map(i => RAMPA[i]).join(",")})`;
+  const nome = CORES[E.turno].find(c => c[0] === E.cor)[1];
+  if (E.cor === "venc") el.innerHTML = `<div>${nome} ${E.turno === "1" ? "no 1º turno, entre Lula e Flávio" : "no 2º turno"}. Cor mais forte, vitória mais larga.</div><div class="rampa" style="background:${grad}"></div>
+    <div class="rampa-eixo"><span>Flávio +${e.dom} pp</span><span>empate</span><span>Lula +${e.dom} pp</span></div>
+    <div class="chips"><span class="chip"><i style="background:var(--lula)"></i>Lula</span><span class="chip"><i style="background:var(--flavio)"></i>Flávio</span></div>`;
+  else if (e.tipo === "div") el.innerHTML = `<div>${nome}, do 1º para o 2º turno (pontos percentuais dos votos válidos).</div><div class="rampa" style="background:${grad}"></div><div class="rampa-eixo"><span>a favor de Flávio ${e.dom}</span><span>0</span><span>a favor de Lula ${e.dom}</span></div>`;
+  else if (e.tipo === "cand" || e.tipo === "neu") el.innerHTML = `<div>${nome}, do 1º para o 2º turno (pontos percentuais${E.cor === "dbn" ? " do comparecimento" : " dos eleitores aptos"}).</div><div class="rampa" style="background:${grad}"></div><div class="rampa-eixo"><span>−${e.dom}</span><span>0</span><span>+${e.dom}</span></div>`;
+  else el.innerHTML = `<div>${nome} no ${E.turno}º turno (% ${E.cor === "abst" ? "dos eleitores aptos" : "do comparecimento"}).</div><div class="rampa" style="background:${grad}"></div><div class="rampa-eixo"><span>${e.dom[0]}%</span><span>${e.dom[1]}% ou mais</span></div>`;
+  el.insertAdjacentHTML("beforeend", `<div class="nota">${E.camada === "cid" ? "Cidades em branco não têm seções nesta seleção." : "Cada ponto é um local de votação; o tamanho acompanha o eleitorado."} Toque em ${E.camada === "cid" ? "uma cidade" : "um ponto"} para ver os números.</div>`);
+}
+
+/* ---------------- Desenho 3D ---------------- */
+const cv = $("#mapa"), ctx = cv.getContext("2d");
+let W = 0, H = 0, DPR = 1, V = { s: 1, x: 0, y: 0 }, enq = false, sel = null;
+const TILT = () => E.tres ? 0.8 : 1;
+const PROF = () => E.tres ? Math.max(8, Math.min(16, V.s * 1.2)) : 0;
+const SX = x => (x - V.x) * V.s, SY = y => (y - V.y) * V.s * TILT();
+function enquadra(x0, y0, x1, y1) {
+  const T = TILT(), pad = celular() ? 0.9 : 0.86;
+  V.s = Math.min(W / (x1 - x0), (H - 30) / ((y1 - y0) * T)) * pad;
+  V.x = (x0 + x1) / 2 - W / 2 / V.s; V.y = (y0 + y1) / 2 - (H / 2 - PROF() / 2) / (V.s * T);
+}
+function enquadraSel() {
+  if (!W || !CID) return;
+  if (!E.uf) { const [a, b] = merc(5.3, -74), [c, d] = merc(-33.8, -34.7); return enquadra(a, b, c, d); }
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const c of CID) if (c.uf === E.uf) { x0 = Math.min(x0, c.x0); y0 = Math.min(y0, c.y0); x1 = Math.max(x1, c.x1); y1 = Math.max(y1, c.y1); }
+  enquadra(x0, y0, x1, y1);
+}
+function redimensiona() {
+  const r = cv.getBoundingClientRect(); if (!r.width || !r.height) return;
+  DPR = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height; cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  if (!enq && CID) { enquadraSel(); enq = true; }
+  desenha();
+}
+addEventListener("resize", () => requestAnimationFrame(redimensiona));
+let pend = false;
+function desenha() { if (!pend) { pend = true; requestAnimationFrame(() => { pend = false; render(); }); } }
+function mundo(off = 0) { const T = TILT(); ctx.setTransform(V.s * DPR, 0, 0, V.s * T * DPR, -V.x * V.s * DPR, (-V.y * V.s * T + off) * DPR); }
+function render() {
+  if (!W || !CID) return;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+  const prof = PROF(), px = 1 / V.s;
+  // sombra e paredes da placa
+  if (prof) {
+    ctx.save(); mundo(prof + 6); ctx.shadowColor = "rgba(11,26,51,.28)"; ctx.shadowBlur = 26 * DPR; ctx.shadowOffsetY = 10 * DPR;
+    ctx.fillStyle = css("--parede-2"); ctx.fill(PAIS); ctx.restore();
+    const p1 = hex2rgb(css("--parede-2")), p2 = hex2rgb(css("--parede"));
+    for (let k = Math.ceil(prof); k >= 1; k--) { mundo(k); ctx.fillStyle = rgb(mix(p2, p1, k / prof)); ctx.fill(PAIS); }
+  }
+  mundo(0);
+  const vx0 = V.x, vy0 = V.y, vx1 = V.x + W / V.s, vy1 = V.y + H / (V.s * TILT());
+  if (E.camada === "cid") {
+    ctx.fillStyle = "#f7f9fb"; ctx.fill(PAIS);
+    for (let c = 0; c < NCID; c++) {
+      const g = CID[c]; if (g.x1 < vx0 || g.x0 > vx1 || g.y1 < vy0 || g.y0 > vy1 || !CORC[c]) continue;
+      ctx.fillStyle = CORC[c]; ctx.fill(g.p);
+    }
+    if (V.s > 22) { ctx.lineWidth = Math.min(1, 0.5 + V.s / 40) * px; ctx.strokeStyle = "rgba(255,255,255,.75)"; for (let c = 0; c < NCID; c++) { const g = CID[c]; if (g.x1 < vx0 || g.x0 > vx1 || g.y1 < vy0 || g.y0 > vy1) continue; ctx.stroke(g.p); } }
+  } else {
+    ctx.fillStyle = css("--terra"); ctx.fill(PAIS);
+  }
+  ctx.lineWidth = 1.1 * px; ctx.strokeStyle = "rgba(11,26,51,.42)"; for (const u of UFS) ctx.stroke(u);
+  if (E.camada === "cid" && sel && sel.tipo === "cid") { ctx.lineWidth = 2.5 * px; ctx.strokeStyle = css("--ink"); ctx.stroke(CID[sel.i].p); }
+  // locais (pontos) em coordenadas de tela
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (E.camada === "loc") {
+    const z = V.s / 1.5, k = Math.min(0.9, 0.05 * Math.pow(z, 0.75)), piso = Math.min(4, 0.9 + z * 0.15);
+    for (let i = ordemL.length - 1; i >= 0; i--) {
+      const l = ordemL[i], X = SX(MXl[l]), Y = SY(MYl[l]);
+      if (X < -20 || Y < -20 || X > W + 20 || Y > H + 20) continue;
+      const r = Math.max(piso, Math.min(26, Math.sqrt(AG.aptos2[l] || AG.aptos1[l]) * k));
+      ctx.fillStyle = CORL[l];
+      if (r < 2.2) ctx.fillRect(X - r, Y - r, 2 * r, 2 * r);
+      else { ctx.beginPath(); ctx.arc(X, Y, r, 0, 6.2832); ctx.fill(); if (r > 3.5) { ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 1; ctx.stroke(); } }
+    }
+    if (sel && sel.tipo === "loc") { const X = SX(MXl[sel.i]), Y = SY(MYl[sel.i]); ctx.beginPath(); ctx.arc(X, Y, 10, 0, 6.2832); ctx.strokeStyle = css("--ink"); ctx.lineWidth = 2.5; ctx.stroke(); }
+  }
+}
+
+/* ---------------- Interação ---------------- */
+let arr = null; const pts = new Map();
+function zoomEm(f, cx, cy) {
+  const T = TILT(), wx = V.x + cx / V.s, wy = V.y + cy / (V.s * T);
+  V.s = Math.max(0.5, Math.min(4000, V.s * f)); V.x = wx - cx / V.s; V.y = wy - cy / (V.s * T); desenha();
+}
+cv.addEventListener("wheel", e => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomEm(Math.exp(-e.deltaY * 0.0015), e.clientX - r.left, e.clientY - r.top); }, { passive: false });
+cv.addEventListener("pointerdown", e => { cv.setPointerCapture(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]); arr = { x: e.clientX, y: e.clientY, moveu: false }; cv.classList.add("arrastando"); });
+cv.addEventListener("pointermove", e => {
+  const r = cv.getBoundingClientRect();
+  if (pts.has(e.pointerId)) {
+    const ant = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (pts.size === 2) {
+      const [a, b] = [...pts.values()], outro = [...pts.entries()].find(([id]) => id !== e.pointerId)[1];
+      const d0 = Math.hypot(ant[0] - outro[0], ant[1] - outro[1]), d1 = Math.hypot(a[0] - b[0], a[1] - b[1]);
+      if (d0 > 0) zoomEm(d1 / d0, (a[0] + b[0]) / 2 - r.left, (a[1] + b[1]) / 2 - r.top);
+      arr.moveu = true; return;
+    }
+    if (Math.abs(e.clientX - arr.x) + Math.abs(e.clientY - arr.y) > 5) arr.moveu = true;
+    V.x -= (e.clientX - ant[0]) / V.s; V.y -= (e.clientY - ant[1]) / (V.s * TILT()); desenha(); $("#tip").hidden = true; return;
+  }
+  if (e.pointerType !== "mouse") return;
+  const alvo = acha(e.clientX - r.left, e.clientY - r.top), tip = $("#tip");
+  if (!alvo) { tip.hidden = true; return; }
+  const A = alvo.tipo === "cid" ? AC : AG, i = alvo.i;
+  const nome = alvo.tipo === "cid" ? `${CID[i].nome} (${CID[i].uf})` : `Local de votação · ${META.ufs[UFL[i]]}`;
+  const tt = E.turno === "1" ? "1" : "2", v = A["lula" + tt][i] + A["flavio" + tt][i] + (tt === "1" ? A.outros1[i] : 0);
+  tip.innerHTML = `<b>${nome}</b>${E.turno === "c" ? "2º turno: " : ""}Lula ${pf(100 * A["lula" + tt][i] / v)}% · Flávio ${pf(100 * A["flavio" + tt][i] / v)}%<br><span class="nota">Clique para ver os detalhes</span>`;
+  tip.hidden = false; tip.style.left = Math.min(e.clientX - r.left + 14, W - 270) + "px"; tip.style.top = (e.clientY - r.top + 14) + "px";
+});
+const fim = e => {
+  pts.delete(e.pointerId); cv.classList.remove("arrastando");
+  if (pts.size === 0) { if (arr && !arr.moveu && e.type === "pointerup") { const r = cv.getBoundingClientRect(); const a = acha(e.clientX - r.left, e.clientY - r.top); if (a) abre(a); } arr = null; }
+};
+cv.addEventListener("pointerup", fim); cv.addEventListener("pointercancel", fim);
+cv.addEventListener("pointerleave", () => $("#tip").hidden = true);
+$("#zmais").onclick = () => zoomEm(1.6, W / 2, H / 2);
+$("#zmenos").onclick = () => zoomEm(1 / 1.6, W / 2, H / 2);
+$("#zfit").onclick = () => { enquadraSel(); desenha(); };
+$("#z3d").onclick = () => { const cx = V.x + W / 2 / V.s, cy = V.y + H / 2 / (V.s * TILT()); E.tres = !E.tres; $("#z3d").setAttribute("aria-pressed", E.tres); V.x = cx - W / 2 / V.s; V.y = cy - H / 2 / (V.s * TILT()); desenha(); };
+function acha(px, py) {
+  const wx = V.x + px / V.s, wy = V.y + py / (V.s * TILT());
+  if (E.camada === "cid") {
+    mundo(0);
+    for (let c = 0; c < NCID; c++) { const g = CID[c]; if (wx < g.x0 || wx > g.x1 || wy < g.y0 || wy > g.y1 || !CORC[c]) continue; if (ctx.isPointInPath(g.p, px * DPR, py * DPR)) return { tipo: "cid", i: c }; }
+    return null;
+  }
+  let best = null, bd = 196;
+  const z = V.s / 1.5, k = Math.min(0.9, 0.05 * Math.pow(z, 0.75)), piso = Math.min(4, 0.9 + z * 0.15);
+  for (const l of ordemL) { const dx = SX(MXl[l]) - px, dy = SY(MYl[l]) - py; if (Math.abs(dx) > 30 || Math.abs(dy) > 30) continue;
+    const r = Math.max(piso, Math.min(26, Math.sqrt(AG.aptos2[l]) * k)), d = dx * dx + dy * dy - r * r; if (d < bd) { bd = d; best = l; } }
+  return best == null ? null : { tipo: "loc", i: best };
+}
+
+/* ---------------- Detalhe ---------------- */
+const barra = (t, partes) => { const total = partes.reduce((a, p) => a + p[1], 0) || 1;
+  return `<div class="barra-linha"><span>${t}</span><div class="barra" role="img" aria-label="${partes.map(p => p[2] + " " + pf(100 * p[1] / total) + "%").join(", ")}">${partes.filter(p => p[1] > 0).map(p => `<span title="${p[2]}: ${nf.format(p[1])} (${pf(100 * p[1] / total)}%)" style="width:${100 * p[1] / total}%;background:${p[0]}"></span>`).join("")}</div></div>`; };
+const LEG_BARRA = `<div class="chips nota"><span class="chip"><i style="background:var(--lula)"></i>Lula</span><span class="chip"><i style="background:var(--flavio)"></i>Flávio</span><span class="chip"><i style="background:var(--outros)"></i>Outros</span><span class="chip"><i style="background:var(--branco)"></i>Brancos</span><span class="chip"><i style="background:var(--nulo)"></i>Nulos</span><span class="chip"><i style="background:var(--abst)"></i>Abstenção</span></div>`;
+function barrasDe(T) {
+  return `<div class="barras">${barra("1º turno", [["var(--lula)", T.lula1, "Lula"], ["var(--flavio)", T.flavio1, "Flávio"], ["var(--outros)", T.outros1, "Outros"], ["var(--branco)", T.branco1, "Brancos"], ["var(--nulo)", T.nulo1, "Nulos"], ["var(--abst)", T.aptos1 - T.comp1, "Abstenção"]])}
+    ${barra("2º turno", [["var(--lula)", T.lula2, "Lula"], ["var(--flavio)", T.flavio2, "Flávio"], ["var(--branco)", T.branco2, "Brancos"], ["var(--nulo)", T.nulo2, "Nulos"], ["var(--abst)", T.aptos2 - T.comp2, "Abstenção"]])}${LEG_BARRA}</div>`;
+}
+function tabelaTurnos(T) {
+  const v1 = T.lula1 + T.flavio1 + T.outros1, v2 = T.lula2 + T.flavio2;
+  const l = (n, a, pa, b, pb) => `<tr><td>${n}</td><td>${a == null ? "–" : nf.format(a)}</td><td>${pa == null ? "" : pf(pa) + "%"}</td><td>${b == null ? "–" : nf.format(b)}</td><td>${pb == null ? "" : pf(pb) + "%"}</td></tr>`;
+  return `<table class="mini"><thead><tr><th></th><th>1º turno</th><th></th><th>2º turno</th><th></th></tr></thead><tbody>
+    ${l("Lula", T.lula1, 100 * T.lula1 / v1, T.lula2, 100 * T.lula2 / v2)}${l("Flávio", T.flavio1, 100 * T.flavio1 / v1, T.flavio2, 100 * T.flavio2 / v2)}
+    ${l("Outros", T.outros1, 100 * T.outros1 / v1, null, null)}${l("Brancos", T.branco1, 100 * T.branco1 / T.comp1, T.branco2, 100 * T.branco2 / T.comp2)}
+    ${l("Nulos", T.nulo1, 100 * T.nulo1 / T.comp1, T.nulo2, 100 * T.nulo2 / T.comp2)}${l("Abstenção", T.aptos1 - T.comp1, 100 * (1 - T.comp1 / T.aptos1), T.aptos2 - T.comp2, 100 * (1 - T.comp2 / T.aptos2))}
+    </tbody></table><p class="nota" style="margin:4px 0 0">Candidatos: % dos votos válidos. Brancos e nulos: % do comparecimento. Abstenção: % dos aptos.</p>`;
+}
+function fechaDetalhe() { $("#detalhe").hidden = true; sel = null; desenha(); }
+function cabecalho(t, sub) { return `<header><div><h3>${t}</h3><div class="end">${sub}</div></div><button class="fechar" aria-label="Fechar">×</button></header>`; }
+const cacheBloco = {};
+async function abre(a) {
+  sel = a; desenha(); $("#tip").hidden = true;
+  const box = $("#detalhe"); box.hidden = false;
+  if (a.tipo === "cid") {
+    const c = CID[a.i], T = {}; K.forEach(k => T[k] = AC[k][a.i]);
+    box.innerHTML = cabecalho(`${c.nome} (${c.uf})`, `${nf.format(T.secoes)} seções em ${nf.format(AC.locais[a.i])} locais de votação · ${nf.format(T.aptos2)} eleitores`)
+      + `<div class="corpo">${barrasDe(T)}${tabelaTurnos(T)}<button class="botao" id="ver-locais">Ver os locais de votação desta cidade</button></div>`;
+    box.querySelector("#ver-locais").onclick = () => { setCamada("loc"); const g = CID[a.i]; enquadra(g.x0, g.y0, g.x1, g.y1); V.s *= 0.85; fechaDetalhe(); desenha(); };
+  } else {
+    const l = a.i, b = META.blocos.findIndex(([x, z]) => l >= x && l <= z);
+    box.innerHTML = `<div class="corpo"><p class="nota">Carregando seções…</p></div>`;
+    if (!cacheBloco[b]) cacheBloco[b] = fetch(`dados/det_${String(b).padStart(2, "0")}.json`).then(r => r.json());
+    const d = (await cacheBloco[b])[l]; if (!sel || sel.i !== l) return;
+    const [nome, bairro, end, mun, uf, aprox, secs] = d, C = META.sec_cols.reduce((o, c, i) => (o[c] = i, o), {});
+    const T = {}; ["aptos1","comp1","lula1","flavio1","outros1","branco1","nulo1","aptos2","comp2","lula2","flavio2","branco2","nulo2"].forEach(k => T[k] = secs.reduce((s, x) => s + x[C[k]], 0));
+    const fl = f => Object.entries(META.flags).filter(([k]) => f & +k).map(([, v]) => v).join("; ");
+    box.innerHTML = cabecalho(nome || "Local sem nome", [end, bairro, `${mun} (${uf})`].filter(Boolean).join(" · ") + (aprox ? " · posição aproximada" : ""))
+      + `<div class="corpo">${barrasDe(T)}${tabelaTurnos(T)}
+      <div class="tab-sec"><table><thead><tr><th></th><th></th><th class="grp sep" colspan="6">1º turno</th><th class="grp sep" colspan="7">2º turno</th></tr>
+      <tr><th>Zona</th><th>Seção</th><th class="sep">Aptos</th><th>Lula</th><th>Flávio</th><th>Outros</th><th>Br+Nu</th><th>Abst.</th><th class="sep">Lula</th><th>Flávio</th><th>Brancos</th><th>Nulos</th><th>Abst.</th><th>Encerrou</th><th>Sem biom.</th></tr></thead><tbody>
+      ${secs.map(s => `<tr><td>${s[C.zona]}</td><td>${s[C.secao]}${s[C.flags] ? ` <span class="flag" title="${fl(s[C.flags])}">⚑</span>` : ""}</td><td class="sep">${s[C.aptos1]}</td><td>${s[C.lula1]}</td><td>${s[C.flavio1]}</td><td>${s[C.outros1]}</td><td>${s[C.branco1] + s[C.nulo1]}</td><td>${s[C.aptos1] - s[C.comp1]}</td><td class="sep">${s[C.lula2]}</td><td>${s[C.flavio2]}</td><td>${s[C.branco2]}</td><td>${s[C.nulo2]}</td><td>${s[C.aptos2] - s[C.comp2]}</td><td>${s[C.agregada_em] ? "na " + s[C.agregada_em] : (s[C.encerr2] || "–")}</td><td>${s[C.biom2] ?? "–"}</td></tr>`).join("")}
+      </tbody></table></div>
+      <p class="nota">Encerrou: horário de Brasília em que a urna foi encerrada no 2º turno. Sem biom.: eleitores liberados pelo mesário sem a digital. Seções agregadas votam na urna de outra seção ("na NNN"). ⚑ caso atípico${celular() ? "" : " (passe o mouse para ver qual)"}.</p></div>`;
+    const ROT = ["Zona", "Seção", "Aptos", "1º Lula", "1º Flávio", "1º Outros", "1º Brancos+nulos", "1º Abstenção", "2º Lula", "2º Flávio", "2º Brancos", "2º Nulos", "2º Abstenção", "Encerrou (2º)", "Sem biometria (2º)"];
+    box.querySelectorAll(".tab-sec tbody tr").forEach(tr => [...tr.children].forEach((td, i) => td.dataset.label = ROT[i]));
+  }
+  box.querySelector(".fechar").onclick = fechaDetalhe;
+}
+addEventListener("keydown", e => { if (e.key === "Escape" && !$("#detalhe").hidden) fechaDetalhe(); });
+
+/* ---------------- Controles ---------------- */
+function seg(id, v) { document.querySelectorAll(`#${id} button`).forEach(b => b.setAttribute("aria-pressed", b.dataset.v === v ? "true" : "false")); }
+function montaCores() {
+  if (!CORES[E.turno].some(c => c[0] === E.cor)) E.cor = CORES[E.turno][0][0];
+  $("#cor").innerHTML = CORES[E.turno].map(([v, n]) => `<option value="${v}"${v === E.cor ? " selected" : ""}>${n}</option>`).join("");
+}
+function setCamada(v) { E.camada = v; seg("seg-camada", v); legenda(); selo(); desenha(); }
+$("#seg-turno").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; E.turno = b.dataset.v; seg("seg-turno", E.turno); montaCores(); montaRampa(); pinta(); });
+$("#seg-camada").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setCamada(b.dataset.v); });
+$("#cor").addEventListener("change", e => { E.cor = e.target.value; montaRampa(); pinta(); });
+$("#recorte").addEventListener("change", e => { E.recorte = e.target.value; agrega(); });
+$("#uf").addEventListener("change", e => { E.uf = e.target.value; agrega(); enquadraSel(); desenha(); });
+$("#busca").addEventListener("change", e => {
+  const v = e.target.value.trim().toLowerCase(); const i = CID.findIndex(c => `${c.nome} (${c.uf})`.toLowerCase() === v) ;
+  const j = i >= 0 ? i : CID.findIndex(c => c.nome.toLowerCase() === v);
+  if (j < 0) return;
+  if (E.uf && E.uf !== CID[j].uf) { E.uf = ""; $("#uf").value = ""; agrega(); }
+  setCamada("cid"); const g = CID[j]; enquadra(g.x0, g.y0, g.x1, g.y1); V.s *= 0.35;
+  const cx = (g.x0 + g.x1) / 2, cy = (g.y0 + g.y1) / 2; V.x = cx - W / 2 / V.s; V.y = cy - H / 2 / (V.s * TILT());
+  abre({ tipo: "cid", i: j });
+  if (celular()) document.querySelector(".mapa-wrap").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+/* ---------------- Relatórios ---------------- */
+let relPronto = false;
+async function montaRelatorio() {
+  if (relPronto) return; relPronto = true;
+  const [html, rel, gan, opr] = await Promise.all([fetch("relatorio.html").then(r => r.text()), fetch("dados/relatorio.json").then(r => r.json()), fetch("dados/ganhos.json").then(r => r.json()), fetch("dados/operacao.json").then(r => r.json())]);
+  REL = rel; GAN = gan; OPR = opr;
+  $("#rel").innerHTML = html;
+  rotulaTabelas($("#rel"));
+  document.querySelectorAll("[data-graf]").forEach(el => { try { GRAF[el.dataset.graf](el, el.dataset); } catch (err) { el.textContent = "Gráfico indisponível."; console.error(err); } });
+  document.body.dataset.relPronto = "1";
+}
+// No celular cada linha de tabela vira um cartão: cada célula leva o nome da coluna
+function rotulaTabelas(raiz) {
+  raiz.querySelectorAll(".tabela table").forEach(tb => {
+    const cab = [...tb.querySelectorAll("thead th")].map(th => th.textContent.trim());
+    tb.querySelectorAll("tbody tr").forEach(tr => [...tr.children].forEach((td, i) => td.dataset.label = cab[i] || ""));
+  });
+}
+let REL, GAN, OPR;
+const larg = el => Math.max(300, Math.min(760, Math.round(el.getBoundingClientRect().width) || 640));
+const SVG = (w, h, inner) => `<svg class="graf" viewBox="0 0 ${w} ${h}" role="img">${inner}</svg>`;
+function barras({ cats, series, w = 640, h = 220, ymax, yfmt = v => v, esperado, rotulos = true, legendaSeries = true }) {
+  const m = { l: 44, r: 8, t: 10, b: 28 }, iw = w - m.l - m.r, ih = h - m.t - m.b;
+  // o eixo nunca fica abaixo do maior valor (dados ou referência), para nenhuma barra sair do gráfico
+  const topo = Math.max(...series.flatMap(s => s.v), ...(esperado || [])) * 1.1;
+  ymax = Math.max(ymax || 0, topo);
+  const y = v => m.t + ih - v / ymax * ih, gw = iw / cats.length, bw = Math.max(2, Math.min(56, (gw - 6) / series.length - 2));
+  const off = (gw - series.length * (bw + 2)) / 2;  // centraliza o grupo de barras na categoria
+  let g = "";
+  for (let i = 0; i <= 4; i++) { const v = ymax * i / 4; g += `<line class="grade" x1="${m.l}" x2="${w - m.r}" y1="${y(v)}" y2="${y(v)}"/><text x="${m.l - 6}" y="${y(v) + 3}" text-anchor="end">${yfmt(v)}</text>`; }
+  cats.forEach((c, i) => {
+    series.forEach((s, j) => { const x = m.l + i * gw + off + j * (bw + 2), v = s.v[i];
+      g += `<path d="M${x},${y(0)} V${y(v) + 2} q0,-2 2,-2 h${bw - 4} q2,0 2,2 V${y(0)} Z" fill="${s.cor}"><title>${s.nome} · ${c}: ${yfmt(v)}</title></path>`; });
+    if (rotulos) g += `<text x="${m.l + i * gw + gw / 2}" y="${h - m.b + 14}" text-anchor="middle">${c}</text>`;
+  });
+  if (esperado) { g += `<path d="${esperado.map((v, i) => `${i ? "L" : "M"}${m.l + i * gw + 3}, ${y(v)} h${gw - 6}`).join(" ")}" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/>`; }
+  g += `<line class="eixo" x1="${m.l}" x2="${w - m.r}" y1="${y(0)}" y2="${y(0)}"/>`;
+  const leg = legendaSeries ? `<div class="chips nota" style="margin-top:4px">${series.map(s => `<span class="chip"><i style="background:${s.cor}"></i>${s.nome}</span>`).join("")}${esperado ? `<span class="chip"><i style="background:none;border:1.5px dashed var(--ink);border-radius:0;height:0;width:14px"></i>Esperado</span>` : ""}</div>` : "";
+  return SVG(w, h, g) + leg;
+}
+const GRAF = {
+  klimek(el, d) {
+    const h = REL.F2.heat[d.chave], n = h.length;
+    const c = document.createElement("canvas"); c.width = n; c.height = n; c.className = "heat";
+    const x = c.getContext("2d"), max = Math.max(...h.flat());
+    const base = hex2rgb(css("--bg")), alvo = hex2rgb(css(d.chave.startsWith("lula") ? "--lula" : "--flavio")), fim = hex2rgb(css("--ink"));
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const v = h[i][j]; if (!v) continue;
+      const t = Math.log1p(v) / Math.log1p(max);
+      const rgb = t < 0.7 ? mix(base, alvo, t / 0.7) : mix(alvo, fim, (t - 0.7) / 0.3 * 0.6);
+      x.fillStyle = `rgb(${rgb})`; x.fillRect(i, n - 1 - j, 1, 1);
+    }
+    el.appendChild(c);
+    el.insertAdjacentHTML("beforeend", `<div class="rampa-eixo"><span>comparecimento 0%</span><span>100%</span></div>`);
+  },
+  ultimo(el, d) {
+    const cands = d.cands.split(","), nomes = { lula: "Lula", flavio: "Flávio", branco: "Brancos", nulo: "Nulos", comparecimento: "Comparecimento" }, cores = { lula: "var(--lula)", flavio: "var(--flavio)", branco: "var(--branco)", nulo: "var(--nulo)", comparecimento: "var(--abst)" };
+    el.innerHTML = barras({ cats: [...Array(10).keys()].map(String), series: cands.map(c => ({ nome: nomes[c.replace(/\d$/, "")] + (c.endsWith("1") ? " (1º)" : " (2º)"), cor: cores[c.replace(/\d$/, "")], v: REL.F45[c].ultimo.map(v => 100 * v) })), ymax: 14, yfmt: v => pf(v, 0) + "%", esperado: Array(10).fill(10), w: larg(el) });
+  },
+  segundo(el, d) {
+    const cands = d.cands.split(","), cores = { lula: "var(--lula)", flavio: "var(--flavio)" };
+    el.innerHTML = barras({ cats: [...Array(10).keys()].map(String), series: cands.map(c => ({ nome: (c.startsWith("lula") ? "Lula" : "Flávio") + (c.endsWith("1") ? " (1º)" : " (2º)"), cor: cores[c.replace(/\d$/, "")], v: REL.F45[c].segundo.map(v => 100 * v) })), ymax: 14, yfmt: v => pf(v, 0) + "%", esperado: REL.F45.esperado.segundo.map(v => 100 * v), w: larg(el) });
+  },
+  primeiro(el, d) {
+    const cands = d.cands.split(","), cores = { lula: "var(--lula)", flavio: "var(--flavio)" };
+    el.innerHTML = barras({ cats: [...Array(9).keys()].map(i => String(i + 1)), series: cands.map(c => ({ nome: (c.startsWith("lula") ? "Lula" : "Flávio") + (c.endsWith("1") ? " (1º)" : " (2º)"), cor: cores[c.replace(/\d$/, "")], v: REL.F45[c].primeiro.map(v => 100 * v) })), ymax: 40, yfmt: v => pf(v, 0) + "%", esperado: REL.F45.esperado.primeiro.map(v => 100 * v), w: larg(el) });
+  },
+  inteiros(el, d) {
+    const H = REL.F3[d.chave].hist, w = larg(el), hgt = 180, m = { l: 44, r: 8, t: 8, b: 26 };
+    const lo = +d.de || 0, hi = +d.ate || 100, a = lo * 10, b = hi * 10, sub = H.slice(a, b), mx = Math.max(...sub) * 1.05;
+    const X = i => m.l + (i / (b - a)) * (w - m.l - m.r), Y = v => m.t + (hgt - m.t - m.b) * (1 - v / mx);
+    let g = "";
+    for (let p = lo; p <= hi; p += (hi - lo) / 5) g += `<line class="grade" x1="${X((p - lo) * 10)}" x2="${X((p - lo) * 10)}" y1="${m.t}" y2="${hgt - m.b}"/><text x="${X((p - lo) * 10)}" y="${hgt - 8}" text-anchor="middle">${pf(p, 0)}%</text>`;
+    g += `<path d="${sub.map((v, i) => `${i ? "L" : "M"}${X(i)},${Y(v)}`).join(" ")}" fill="none" stroke="${d.chave.startsWith("lula") ? "var(--lula)" : d.chave.startsWith("flavio") ? "var(--flavio)" : "var(--abst)"}" stroke-width="1.2"/>`;
+    g += `<line class="eixo" x1="${m.l}" x2="${w - m.r}" y1="${Y(0)}" y2="${Y(0)}"/><text x="${m.l - 6}" y="${Y(mx / 1.05) + 3}" text-anchor="end">${nf.format(Math.round(mx / 1.05))}</text>`;
+    el.innerHTML = SVG(w, hgt, g);
+  },
+  encerramento(el) {
+    const h1 = new Map(REL.F7.hist1.map(r => [r.m, r.n])), h2 = new Map(REL.F7.hist2.map(r => [r.m, r.n]));
+    const ms = []; for (let m = 50; m <= 200; m += 5) ms.push(m);
+    const cats = ms.map(m => { const t = 16 * 60 + m; return `${Math.floor(t / 60)}h${String(t % 60).padStart(2, "0")}`; });
+    el.innerHTML = barras({ cats, series: [{ nome: "1º turno", cor: "var(--t-a)", v: ms.map(m => h1.get(m) || 0) }, { nome: "2º turno", cor: "var(--t-c)", v: ms.map(m => h2.get(m) || 0) }], yfmt: v => nf.format(Math.round(v)), w: larg(el), h: 240, rotulos: false })
+      + `<div class="rampa-eixo"><span>16h50</span><span>17h30</span><span>18h00</span><span>18h30</span><span>19h20</span></div>`;
+  },
+  biometria(el) {
+    const c1 = REL.F8.curva1, c2 = REL.F8.curva2;
+    el.innerHTML = barras({ cats: c2.map(r => r.faixa.replace(/[\(\]\[]/g, "").replace(",", "–").replace(/\.0/g, "") + "%"), series: [{ nome: "Lula no 1º turno", cor: "var(--t-a)", v: c1.map(r => r.lula) }, { nome: "Lula no 2º turno", cor: "var(--lula)", v: c2.map(r => r.lula) }], ymax: 100, yfmt: v => pf(v, 0) + "%", w: larg(el), rotulos: larg(el) > 520 });
+  },
+  // Distribuição, seção por seção, da variação de cada candidato (pp dos aptos)
+  ganhoHist(el) {
+    const w = larg(el), h = 220, m = { l: 48, r: 10, t: 10, b: 30 }, [lo, hi] = GAN.hist_faixa;
+    const A = GAN.hist_lula, B = GAN.hist_flavio, n = A.length, mx = Math.max(...A, ...B) * 1.08;
+    const X = i => m.l + i / n * (w - m.l - m.r), Y = v => m.t + (h - m.t - m.b) * (1 - v / mx);
+    let g = "";
+    for (let p = lo; p <= hi; p += 5) { const x = X((p - lo) / (hi - lo) * n); g += `<line class="grade" x1="${x}" x2="${x}" y1="${m.t}" y2="${h - m.b}"/><text x="${x}" y="${h - 12}" text-anchor="middle">${p > 0 ? "+" : ""}${p}</text>`; }
+    const area = (H, cor) => `<path d="M${X(0)},${Y(0)} ${H.map((v, i) => `L${X(i)},${Y(v)} L${X(i + 1)},${Y(v)}`).join(" ")} L${X(n)},${Y(0)} Z" fill="${cor}" fill-opacity=".22" stroke="${cor}" stroke-width="1.5"/>`;
+    g += area(B, "var(--flavio)") + area(A, "var(--lula)");
+    const z = X((0 - lo) / (hi - lo) * n);
+    g += `<line x1="${z}" x2="${z}" y1="${m.t}" y2="${h - m.b}" stroke="var(--ink)" stroke-dasharray="3 3"/><line class="eixo" x1="${m.l}" x2="${w - m.r}" y1="${Y(0)}" y2="${Y(0)}"/>`;
+    g += `<text x="${m.l - 6}" y="${Y(mx / 1.08) + 3}" text-anchor="end">${nf.format(Math.round(mx / 1.08))}</text>`;
+    el.innerHTML = SVG(w, h, g) + `<div class="chips nota"><span class="chip"><i style="background:var(--lula)"></i>Lula</span><span class="chip"><i style="background:var(--flavio)"></i>Flávio</span></div>`;
+  },
+  // Mapa de densidade (como o de Klimek) com a média por faixa sobreposta
+  ganhoHeat(el, d) {
+    const H = GAN.heat[d.x + "|" + d.cand], n = H.length, E = GAN.eixos[d.x], [ylo, yhi] = GAN.y_faixa, k = 6;
+    const c = document.createElement("canvas"); c.width = n * k; c.height = n * k;
+    const x = c.getContext("2d"), max = Math.max(...H.flat());
+    const base = hex2rgb(css("--bg")), alvo = hex2rgb(css(d.cand === "lula" ? "--lula" : "--flavio")), fim = hex2rgb(css("--ink"));
+    x.fillStyle = `rgb(${base})`; x.fillRect(0, 0, n * k, n * k);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const v = H[i][j]; if (!v) continue;
+      const t = Math.log1p(v) / Math.log1p(max);
+      x.fillStyle = `rgb(${t < 0.7 ? mix(base, alvo, t / 0.7) : mix(alvo, fim, (t - 0.7) / 0.3 * 0.6)})`;
+      x.fillRect(i * k, (n - 1 - j) * k, k, k);
+    }
+    const PX = v => (v - E[1]) / (E[2] - E[1]) * n * k, PY = v => (1 - (v - ylo) / (yhi - ylo)) * n * k;
+    x.setLineDash([4, 4]); x.strokeStyle = css("--ink-3"); x.lineWidth = 1; x.beginPath(); x.moveTo(0, PY(0)); x.lineTo(n * k, PY(0)); x.stroke(); x.setLineDash([]);
+    const pts = GAN.curva[d.x].filter(Boolean);
+    x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(PX(p.x), PY(p[d.cand])) : x.moveTo(PX(p.x), PY(p[d.cand])));
+    x.strokeStyle = css("--panel"); x.lineWidth = 5; x.stroke();
+    x.strokeStyle = css("--ink"); x.lineWidth = 2.5; x.stroke();
+    el.innerHTML = `<div class="heat-wrap"></div><div class="rampa-eixo"><span>${pf(E[1], 0)}</span><span>${pf((E[1] + E[2]) / 2, 0)}</span><span>${pf(E[2], 0)}</span></div><div class="eixo-y">Vertical: variação de ${d.cand === "lula" ? "Lula" : "Flávio"}, de ${ylo} a +${yhi} pp. Linha escura: média por faixa. Tracejado: zero.</div>`;
+    el.firstChild.appendChild(c);
+  },
+  // Curvas de tendência dos dois candidatos no mesmo eixo
+  tendencia(el, d) {
+    const pts = GAN.curva[d.x].filter(Boolean), E = GAN.eixos[d.x], w = larg(el), h = 230, m = { l: 44, r: 70, t: 12, b: 32 };
+    const vs = pts.flatMap(p => [p.lula, p.flavio]), ylo = Math.min(0, Math.floor(Math.min(...vs) - 1)), yhi = Math.ceil(Math.max(...vs) + 1);
+    const X = v => m.l + (v - E[1]) / (E[2] - E[1]) * (w - m.l - m.r), Y = v => m.t + (1 - (v - ylo) / (yhi - ylo)) * (h - m.t - m.b);
+    let g = "";
+    const passo = (yhi - ylo) > 12 ? 5 : 2;
+    for (let v = Math.ceil(ylo / passo) * passo; v <= yhi; v += passo) g += `<line class="grade" x1="${m.l}" x2="${w - m.r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${m.l - 6}" y="${Y(v) + 3}" text-anchor="end">${v > 0 ? "+" : ""}${v}</text>`;
+    for (let i = 0; i <= 4; i++) { const v = E[1] + (E[2] - E[1]) * i / 4; g += `<text x="${X(v)}" y="${h - 12}" text-anchor="middle">${pf(v, 0)}</text>`; }
+    g += `<line x1="${m.l}" x2="${w - m.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--ink-3)" stroke-dasharray="3 3"/>`;
+    for (const [c, cor, nome] of [["flavio", "var(--flavio)", "Flávio"], ["lula", "var(--lula)", "Lula"]]) {
+      g += `<path d="${pts.map((p, i) => `${i ? "L" : "M"}${X(p.x)},${Y(p[c])}`).join(" ")}" fill="none" stroke="${cor}" stroke-width="2"/>`;
+      g += pts.map(p => `<circle cx="${X(p.x)}" cy="${Y(p[c])}" r="4" fill="${cor}" stroke="var(--bg)" stroke-width="2"><title>${nome}: ${sinal(p[c])} pp com x = ${pf(p.x)} (${nf.format(p.n)} seções)</title></circle>`).join("");
+      const u = pts[pts.length - 1];
+      g += `<text x="${X(u.x) + 8}" y="${Y(u[c]) + 4}" style="fill:var(--ink-2);font-family:var(--body);font-size:11px">${nome} ${sinal(u[c])}</text>`;
+    }
+    el.innerHTML = SVG(w, h, g) + `<div class="nota">Horizontal: ${E[0]}. Vertical: variação média do candidato na seção, em pp dos aptos (média ponderada pelo eleitorado).</div>`;
+  },
+  // Composição estimada: de onde vieram os votos (Goodman; lphom entre parênteses)
+  composicao(el) {
+    const G = GAN.fluxos.goodman, L = GAN.fluxos.lphom;
+    const orig = [["abst", "Abstenção no 1º turno"], ["nulo", "Nulos"], ["branco", "Brancos"], ["cury", "Cury"], ["renan", "Renan Santos"], ["caiado", "Caiado"], ["demais", "Demais"]];
+    const linhas = orig.map(([o, n]) => [n, G[o].lula, G[o].flavio, L[o].lula, L[o].flavio]);
+    const perde = (F, c, d) => F[c][d];
+    linhas.push(["Eleitores de Lula no 1º turno", 0, perde(G, "lula", "flavio"), 0, perde(L, "lula", "flavio")]);
+    linhas.push(["Eleitores de Flávio no 1º turno", perde(G, "flavio", "lula"), 0, perde(L, "flavio", "lula"), 0]);
+    const mx = Math.max(...linhas.flatMap(l => l.slice(1).map(Math.abs)));
+    const b = (v, vl, cor) => `<div class="comp-b"><i style="width:${Math.abs(v) / mx * 65}%;background:${cor}"></i>${pf(v / 1e6, 2)} mi <span class="nota">(lphom ${pf(vl / 1e6, 2)})</span></div>`;
+    el.innerHTML = `<div class="comp">${linhas.map(([n, gl, gf, ll, lf]) => `<div class="comp-linha"><span>${n}</span><div class="comp-barras">${b(gl, ll, "var(--lula)")}${b(gf, lf, "var(--flavio)")}</div></div>`).join("")}</div>
+      <div class="chips nota"><span class="chip"><i style="background:var(--lula)"></i>foram para Lula</span><span class="chip"><i style="background:var(--flavio)"></i>foram para Flávio</span></div>`;
+  },
+  // Votação acumulada de Lula conforme os boletins chegam ao TSE, nos dois turnos
+  apuracao(el) {
+    const w = larg(el), h = 230, m = { l: 44, r: 70, t: 12, b: 32 };
+    const c1 = OPR.curva1, c2 = OPR.curva2, vs = [...c1, ...c2].map(c => c.lula);
+    const ylo = Math.floor(Math.min(...vs) - 1), yhi = Math.ceil(Math.max(...vs, 50) + 1);
+    const X = v => m.l + v / 100 * (w - m.l - m.r), Y = v => m.t + (1 - (v - ylo) / (yhi - ylo)) * (h - m.t - m.b);
+    let g = "";
+    for (let v = ylo; v <= yhi; v += 1) if (v % 2 === 0) g += `<line class="grade" x1="${m.l}" x2="${w - m.r}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${m.l - 6}" y="${Y(v) + 3}" text-anchor="end">${v}%</text>`;
+    for (let p = 0; p <= 100; p += 25) g += `<text x="${X(p)}" y="${h - 12}" text-anchor="middle">${p}%</text>`;
+    g += `<line x1="${m.l}" x2="${w - m.r}" y1="${Y(50)}" y2="${Y(50)}" stroke="var(--ink-3)" stroke-dasharray="3 3"/>`;
+    for (const [c, cor, nome] of [[c1, "var(--t-a)", "1º turno"], [c2, "var(--lula)", "2º turno"]]) {
+      g += `<path d="${c.map((p, i) => `${i ? "L" : "M"}${X(p.pct)},${Y(p.lula)}`).join(" ")}" fill="none" stroke="${cor}" stroke-width="2.2"/>`;
+      g += c.map(p => `<circle cx="${X(p.pct)}" cy="${Y(p.lula)}" r="6" fill="transparent"><title>${nome}: ${pf(p.pct, 0)}% das urnas recebidas às ${p.hora}, Lula ${pf(p.lula)}%</title></circle>`).join("");
+      const u = c[c.length - 1];
+      g += `<text x="${X(100) + 6}" y="${Y(u.lula) + 4}" style="fill:var(--ink-2);font-family:var(--body);font-size:11px">${nome} ${pf(u.lula)}%</text>`;
+    }
+    el.innerHTML = SVG(w, h, g) + `<div class="chips nota"><span class="chip"><i style="background:var(--t-a)"></i>1º turno</span><span class="chip"><i style="background:var(--lula)"></i>2º turno</span><span>Tracejado: 50%.</span></div>`;
+  },
+  regiao(el) {
+    const ordem = ["SE", "NE", "S", "CO", "N"], nome = { SE: "Sudeste", NE: "Nordeste", S: "Sul", CO: "Centro-Oeste", N: "Norte" };
+    const r = Object.fromEntries(GAN.regiao.map(x => [x.regiao, x]));
+    el.innerHTML = barras({ cats: ordem.map(o => nome[o]), series: [{ nome: "Lula", cor: "var(--lula)", v: ordem.map(o => r[o].lula / 1e6) }, { nome: "Flávio", cor: "var(--flavio)", v: ordem.map(o => r[o].flavio / 1e6) }], yfmt: v => pf(v, 1) + " mi", w: larg(el) });
+  },
+  lider(el) {
+    const g = GAN.lider.slice().sort((a, b) => a.grupo < b.grupo ? -1 : 1);
+    el.innerHTML = barras({ cats: g.map(x => x.grupo.replace(" no 1º turno", "")), series: [{ nome: "Votos ganhos por Lula", cor: "var(--lula)", v: g.map(x => x.lula / 1e6) }, { nome: "Votos ganhos por Flávio", cor: "var(--flavio)", v: g.map(x => x.flavio / 1e6) }], yfmt: v => pf(v, 1) + " mi", w: larg(el) });
+  },
+};
+
+
+
+/* ---------------- Início ---------------- */
+lePaleta(); montaCores(); montaRampa(); rota();
+</script>
+
+</body>
+</html>
